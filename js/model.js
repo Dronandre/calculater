@@ -23,14 +23,63 @@ var modelController = (function() {
         }
         
         if (type === "inc") {
-            newItem = new Income(ID, desc, val)
+            newItem = new Income(ID, desc, parseFloat(val));
         } else if (type === "exp") {
-            newItem = new Expense(ID, desc, val)
+            newItem = new Expense(ID, desc, parseFloat(val));
         }
 
         data.allItems[type].push(newItem);
 
         return newItem;
+    }
+
+    function deleteItem(type, id){
+
+        var ids = data.allItems[type].map(function(item){
+            return item.id
+        });
+        
+        index = ids.indexOf(id);
+        
+        if (index !== -1) {
+            data.allItems[type].splice(index, 1);
+        }        
+    }
+
+    function calulateTotalSum(type){
+        var sum = 0;
+
+        data.allItems[type].forEach(function(item){
+            sum = sum + item.value;
+        });
+
+        return  sum;
+    }
+
+    function calculateBudget(){
+        // Посчитать все доходы
+        data.totals.inc = calulateTotalSum("inc");
+        
+        // Посчитать все расходы
+        data.totals.exp = calulateTotalSum("exp");
+        
+        // Посчитали бюджет
+        data.budget = data.totals.inc - data.totals.exp;
+        // Посчитали проценты
+        if (data.totals.inc > 0) {
+            data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+        } else {
+            data.percentage = -1;
+        }       
+    }
+
+    function getBudget(){ 
+        return {
+            budget: data.budget,
+            totalInc: data.totals.inc,
+            totalExp: data.totals.exp,
+            percentage: data.percentage
+        }
     }
 
     var data = {
@@ -41,13 +90,18 @@ var modelController = (function() {
         totals: {
             inc: 0,
             exp: 0
-        }
+        },
+        budget: 0,
+        percentage: -1
     }
 
     return {
         addItem: addItem,
+        deleteItem: deleteItem,
+        calculateBudget: calculateBudget,
+        getBudget: getBudget,
         test: function(){
-            console.log(data);
+            // console.log(data);
         }
     }
 
