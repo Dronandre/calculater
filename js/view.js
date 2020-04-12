@@ -12,7 +12,9 @@ var viewController = (function() {
         incomeLabel: "#income-label",
         expensesLabel: "#expense-label",
         expensesPersentLabel: "#expense-persent-label",
-        budgetTable: "#budget-table"
+        budgetTable: "#budget-table",
+        monthLabel: "#month",
+        yearLabel: "#year"
     };
 
     function getInput() {
@@ -21,6 +23,49 @@ var viewController = (function() {
             description: document.querySelector(DOMstrings.inputDescription).value,   
             value: document.querySelector(DOMstrings.inputValue).value   
         }
+    }
+
+    function formatNumber(num, type){
+
+        var numSplit, int, dec, newInt, resultNumber;
+
+        num = Math.abs(num);
+
+        num = num.toFixed(2);
+
+        numSplit = num.split(".");
+
+        int = numSplit[0];
+
+        dec = numSplit[1];
+
+        if (int.length > 3) {
+            newInt = "";
+            
+            
+            for( var i = 0 ; i < int.length / 3; i++ ){
+            
+                newInt = "," + int.substring(int.length - 3 * (i + 1), int.length - 3 * i ) + newInt
+            }
+
+            if (newInt[0] === ",") {
+                newInt = newInt.substring(1);
+            }
+        }  else if ( int === "0") {
+            newInt = "0";
+        } else {
+            newInt = int;
+        }
+
+        resultNumber = newInt + "." + dec;
+
+        if(type === "exp") {
+            resultNumber = "- " + resultNumber;
+        } else if (type === "inc") {
+            resultNumber = "+ " + resultNumber;
+        }
+
+        return resultNumber;
     }
 
     function renderListItem(obj, type){
@@ -48,7 +93,7 @@ var viewController = (function() {
                             <div class="item__amount">
                                 %value%
                                 <div class="item__badge">
-                                    <div class="badge badge--dark">
+                                    <div class="item__percent badge badge--dark">
                                         15%
                                     </div>
                                 </div>
@@ -61,7 +106,7 @@ var viewController = (function() {
         }
         newHtml = html.replace("%id%", obj.id);
         newHtml = newHtml.replace("%description%", obj.description);
-        newHtml = newHtml.replace("%value%", obj.value);
+        newHtml = newHtml.replace("%value%", formatNumber(obj.value, type) );
 
         document.querySelector(containerElement).insertAdjacentHTML("beforeend", newHtml);
     }
@@ -78,10 +123,17 @@ var viewController = (function() {
     }
 
     function updateBudget(obj){
+        var type;
 
-        document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-        document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-        document.querySelector(DOMstrings.expensesLabel).textContent = obj.totalExp;
+        if ( obj.budget > 0) {
+            type = "inc"
+        } else {
+            type = "exp"
+        }
+
+        document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+        document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(obj.totalInc, "inc");
+        document.querySelector(DOMstrings.expensesLabel).textContent = formatNumber(obj.totalExp, "exp");
 
         if (obj.percentage > 0) {
             document.querySelector(DOMstrings.expensesPersentLabel).textContent = obj.percentage;
@@ -94,12 +146,46 @@ var viewController = (function() {
         document.getElementById(itemID).remove();
     }
 
+    function updateItemPercentages(items){
+
+        items.forEach(function(item) {
+        
+            var el = document.getElementById(`exp-${item[0]}`).querySelector(".item__percent");
+            
+            if (item[1] >= 0) {  
+                el.parentElement.style.display = "block";
+                el.textContent = item[1] + "%";
+            } else {
+                el.parentElement.style.display = "none";
+            }
+
+        });
+
+    }
+
+    function displayMonth(){
+        var now, year, month, monthArr;
+
+        now = new Date();
+        year = now.getFullYear();
+        month = now.getMonth();
+
+        monthArr = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май',' Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь',' Ноябрь', 'Декабрь'];
+
+        month = monthArr[month];
+
+        document.querySelector(DOMstrings.monthLabel).innerText = month;
+        document.querySelector(DOMstrings.yearLabel).innerText = year;
+    }
+
     return {
         getInput: getInput,
         renderListItem: renderListItem,
         clearFields: clearFields,
         updateBudget: updateBudget,
         deleteListItem: deleteListItem,
+        updateItemPercentages: updateItemPercentages,
+        displayMonth: displayMonth,
         getDomstrings: function(){
             return DOMstrings
         }
